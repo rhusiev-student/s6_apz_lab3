@@ -1,0 +1,36 @@
+########################################
+# JAVA=/usr/bin/java
+# JAVA_OPTS=--add-modules java.se --add-exports java.base/jdk.internal.ref=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens java.management/sun.management=ALL-UNNAMED --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED -Dhazelcast.logging.type=log4j2 -Dlog4j.configurationFile=file:/opt/hazelcast/config/log4j2.properties -Dhazelcast.config=/opt/hazelcast/config/hazelcast-docker.xml -Djet.custom.lib.dir=/opt/hazelcast/custom-lib -Djava.net.preferIPv4Stack=true -XX:MaxRAMPercentage=80.0 -XX:MaxGCPauseMillis=5
+# CLASSPATH=/opt/hazelcast/*:/opt/hazelcast/lib:/opt/hazelcast/lib/*:/opt/hazelcast/bin/user-lib:/opt/hazelcast/bin/user-lib/*
+########################################
+2025-03-08 21:01:35,365 [[32m INFO[m] [[36mmain[m] [[34mc.h.i.c.AbstractConfigLocator[m]: Loading configuration '/opt/hazelcast/config/hazelcast-docker.xml' from System property 'hazelcast.config'
+2025-03-08 21:01:35,366 [[32m INFO[m] [[36mmain[m] [[34mc.h.i.c.AbstractConfigLocator[m]: Using configuration file at /opt/hazelcast/config/hazelcast-docker.xml
+2025-03-08 21:01:35,733 [[32m INFO[m] [[36mmain[m] [[34mc.h.i.c.o.ExternalConfigurationOverride[m]: Detected external configuration entries in environment variables: [hazelcast.network.publicaddress=10.8.0.2:5701,hazelcast.clustername=logging]
+2025-03-08 21:01:35,764 [[32m INFO[m] [[36mmain[m] [[34mc.h.i.AddressPicker[m]: [LOCAL] [logging] [5.3.8] Using public address: [10.8.0.2]:5701
+2025-03-08 21:01:35,795 [[32m INFO[m] [[36mmain[m] [[34mc.h.s.logo[m]: [10.8.0.2]:5701 [logging] [5.3.8] 
+	+       +  o    o     o     o---o o----o o      o---o     o     o----o o--o--o
+	+ +   + +  |    |    / \       /  |      |     /         / \    |         |   
+	+ + + + +  o----o   o   o     o   o----o |    o         o   o   o----o    |   
+	+ +   + +  |    |  /     \   /    |      |     \       /     \       |    |   
+	+       +  o    o o       o o---o o----o o----o o---o o       o o----o    o   
+2025-03-08 21:01:35,795 [[32m INFO[m] [[36mmain[m] [[34mc.h.system[m]: [10.8.0.2]:5701 [logging] [5.3.8] Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+2025-03-08 21:01:35,795 [[32m INFO[m] [[36mmain[m] [[34mc.h.system[m]: [10.8.0.2]:5701 [logging] [5.3.8] Hazelcast Platform 5.3.8 (20240717) starting at [10.8.0.2]:5701
+2025-03-08 21:01:35,795 [[32m INFO[m] [[36mmain[m] [[34mc.h.system[m]: [10.8.0.2]:5701 [logging] [5.3.8] Cluster name: logging
+2025-03-08 21:01:35,795 [[32m INFO[m] [[36mmain[m] [[34mc.h.system[m]: [10.8.0.2]:5701 [logging] [5.3.8] Integrity Checker is disabled. Fail-fast on corrupted executables will not be performed. For more information, see the documentation for Integrity Checker.
+2025-03-08 21:01:35,795 [[32m INFO[m] [[36mmain[m] [[34mc.h.system[m]: [10.8.0.2]:5701 [logging] [5.3.8] Jet is enabled
+2025-03-08 21:01:35,963 [[32m INFO[m] [[36mmain[m] [[34mc.h.i.t.TpcServerBootstrap[m]: [10.8.0.2]:5701 [logging] [5.3.8] TPC: disabled
+2025-03-08 21:01:36,114 [[32m INFO[m] [[36mmain[m] [[34mc.h.s.security[m]: [10.8.0.2]:5701 [logging] [5.3.8] Enable DEBUG/FINE log level for log category com.hazelcast.system.security  or use -Dhazelcast.security.recommendations system property to see 🔒 security recommendations and the status of current config.
+2025-03-08 21:01:36,165 [[32m INFO[m] [[36mmain[m] [[34mc.h.i.i.Node[m]: [10.8.0.2]:5701 [logging] [5.3.8] Using Multicast discovery
+2025-03-08 21:01:36,169 [[33m WARN[m] [[36mmain[m] [[34mc.h.c.CPSubsystem[m]: [10.8.0.2]:5701 [logging] [5.3.8] CP Subsystem is not enabled. CP data structures will operate in UNSAFE mode! Please note that UNSAFE mode will not provide strong consistency guarantees.
+2025-03-08 21:01:36,368 [[32m INFO[m] [[36mmain[m] [[34mc.h.j.i.JetServiceBackend[m]: [10.8.0.2]:5701 [logging] [5.3.8] Setting number of cooperative threads and default parallelism to 8
+2025-03-08 21:01:36,426 [[32m INFO[m] [[36mmain[m] [[34mc.h.i.d.Diagnostics[m]: [10.8.0.2]:5701 [logging] [5.3.8] Diagnostics disabled. To enable add -Dhazelcast.diagnostics.enabled=true to the JVM arguments.
+2025-03-08 21:01:36,431 [[32m INFO[m] [[36mmain[m] [[34mc.h.c.LifecycleService[m]: [10.8.0.2]:5701 [logging] [5.3.8] [10.8.0.2]:5701 is STARTING
+2025-03-08 21:01:38,851 [[32m INFO[m] [[36mmain[m] [[34mc.h.i.c.ClusterService[m]: [10.8.0.2]:5701 [logging] [5.3.8] 
+
+Members {size:1, ver:1} [
+	Member [10.8.0.2]:5701 - d3147e36-41fc-4953-907a-f0e107a7e07f this
+]
+
+2025-03-08 21:01:38,860 [[32m INFO[m] [[36mmain[m] [[34mc.h.j.i.JobCoordinationService[m]: [10.8.0.2]:5701 [logging] [5.3.8] Jet started scanning for jobs
+2025-03-08 21:01:38,862 [[32m INFO[m] [[36mmain[m] [[34mc.h.c.LifecycleService[m]: [10.8.0.2]:5701 [logging] [5.3.8] [10.8.0.2]:5701 is STARTED
+2025-03-08 21:01:39,016 [[32m INFO[m] [[36mhz.naughty_pasteur.priority-generic-operation.thread-0[m] [[34mc.h.c.i.p.t.AuthenticationMessageTask[m]: [10.8.0.2]:5701 [logging] [5.3.8] Received auth from Connection[id=1, /10.89.0.29:5701->/10.89.0.29:40834, qualifier=null, endpoint=[10.89.0.29]:40834, remoteUuid=1c7018e3-9ed7-4c14-81a1-43289d00ca27, alive=true, connectionType=PYH, planeIndex=-1], successfully authenticated, clientUuid: 1c7018e3-9ed7-4c14-81a1-43289d00ca27, client name: hz.client_0, client version: 5.5.0
