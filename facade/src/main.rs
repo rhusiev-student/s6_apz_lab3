@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
@@ -23,14 +24,50 @@ use axum::{
 
 #[derive(Clone)]
 struct Client {
-    logging: Arc<Mutex<LoggingServiceClient<tonic::transport::Channel>>>,
-    message: Arc<Mutex<reqwest::Client>>,
-    message_url: String,
+    config: Arc<Mutex<reqwest::Client>>,
+    config_url: String,
+}
+
+impl Client {
+    async fn get_possible_addresses(&self, service: &str) -> Vec<String> {
+        let mut addresses = Vec::new();
+
+        let response = self
+            .config
+            .lock()
+            .await
+            .get(&format!("{}/get_ips/{}", self.config_url, service))
+            .send()
+            .await;
+
+        if response.is_err() {
+            println!(
+                "Error while getting a message request: {}",
+                response.err().unwrap()
+            );
+            return addresses;
+        }
+
+        let ips = match response.unwrap().json::<HashMap<String, String>>().await {
+            Ok(ips) => ips,
+            Err(err) => {
+                println!("Error while getting a message request: {}", err);
+                return addresses;
+            }
+        };
+
+        for (_, ip) in ips {
+            addresses.push(ip);
+        }
+
+        addresses
+    }
 }
 
 async fn create_grpc_client(
+    logging_url: &str,
 ) -> Result<LoggingServiceClient<tonic::transport::Channel>, tonic::transport::Error> {
-    let channel = Endpoint::from_static("http://localhost:13228")
+    let channel = Endpoint::from_shared(logging_url.to_string())?
         .connect_timeout(Duration::from_secs(5))
         .timeout(Duration::from_secs(5))
         .tcp_keepalive(Some(Duration::from_secs(30)))
@@ -89,26 +126,25 @@ async fn add_log(
     const MAX_RETRIES: u32 = 3;
     const RETRY_DELAY_MS: u64 = 500;
 
-    let logging_arc = client.logging.clone();
+    let logging_urls = client.get_possible_addresses("logging").await;
+    let logging_urls_len = logging_urls.len();
+    let current_url_logging = Arc::new(AtomicUsize::new(0));
 
     let status = retry(
         || async {
-            let mut grpc_client = logging_arc.lock().await;
-            grpc_client.add_log(request.get_ref().clone()).await
+            let current = current_url_logging.load(Ordering::Relaxed);
+            let grpc_client = create_grpc_client(&("http://".to_owned() + &logging_urls[current])).await;
+            match grpc_client {
+                Ok(mut client) => client.add_log(request.get_ref().clone()).await,
+                Err(err) => Err(tonic::Status::internal(err.to_string())),
+            }
         },
         MAX_RETRIES,
         Duration::from_millis(RETRY_DELAY_MS),
-        Some(|err: &tonic::Status| {
-            let error_code = err.code();
-            let logging_arc = logging_arc.clone();
-            async move {
-                if error_code == tonic::Code::Unavailable {
-                    if let Ok(new_client) = create_grpc_client().await {
-                        let mut grpc_client = logging_arc.lock().await;
-                        *grpc_client = new_client;
-                    }
-                }
-            }
+        Some(|_: &tonic::Status| {
+            let current = current_url_logging.load(Ordering::Relaxed);
+            current_url_logging.store((current + 1) % logging_urls_len, Ordering::Relaxed);
+            async {}
         }),
     )
     .await;
@@ -120,14 +156,10 @@ async fn add_log(
 }
 
 async fn get_logs(State(client): State<Client>) -> impl IntoResponse {
-    let message = match client
-        .message
-        .lock()
-        .await
-        .get(&client.message_url)
-        .send()
-        .await
-    {
+    let message_client = reqwest::Client::new();
+    let message_urls = client.get_possible_addresses("messages").await;
+    let current_url_messages = &message_urls[0];
+    let message = match message_client.get("http://".to_owned() + current_url_messages).send().await {
         Ok(response) => match response.text().await {
             Ok(msg) => msg,
             Err(err) => {
@@ -144,27 +176,26 @@ async fn get_logs(State(client): State<Client>) -> impl IntoResponse {
     const MAX_RETRIES: u32 = 3;
     const RETRY_DELAY_MS: u64 = 500;
 
-    let logging_arc = client.logging.clone();
+    let logging_urls = client.get_possible_addresses("logging").await;
+    let logging_urls_len = logging_urls.len();
+    let current_url_logging = Arc::new(AtomicUsize::new(0));
     let logs = tonic::Request::new(GetLogsRequest {});
 
     let status = retry(
         || async {
-            let mut grpc_client = logging_arc.lock().await;
-            grpc_client.get_logs(logs.get_ref().clone()).await
+            let current = current_url_logging.load(Ordering::Relaxed);
+            let grpc_client = create_grpc_client(&("http://".to_owned() + &logging_urls[current])).await;
+            match grpc_client {
+                Ok(mut client) => client.get_logs(logs.get_ref().clone()).await,
+                Err(err) => Err(tonic::Status::internal(err.to_string())),
+            }
         },
         MAX_RETRIES,
         Duration::from_millis(RETRY_DELAY_MS),
-        Some(|err: &tonic::Status| {
-            let error_code = err.code();
-            let logging_arc = logging_arc.clone();
-            async move {
-                if error_code == tonic::Code::Unavailable {
-                    if let Ok(new_client) = create_grpc_client().await {
-                        let mut grpc_client = logging_arc.lock().await;
-                        *grpc_client = new_client;
-                    }
-                }
-            }
+        Some(|_: &tonic::Status| {
+            let current = current_url_logging.load(Ordering::Relaxed);
+            current_url_logging.store((current + 1) % logging_urls_len, Ordering::Relaxed);
+            async {}
         }),
     )
     .await;
@@ -185,14 +216,20 @@ async fn get_logs(State(client): State<Client>) -> impl IntoResponse {
 
 #[tokio::main]
 async fn main() {
-    let grpc_client = create_grpc_client()
-        .await
-        .expect("Failed to connect to logging service");
+    let args: Vec<String> = std::env::args().collect();
+    let config_url: String;
+    if args.len() > 2 {
+        println!("Usage: {} <config_url>", args[0]);
+        return;
+    } else if args.len() == 1 {
+        config_url = "http://localhost:8000".to_string();
+    } else {
+        config_url = args[1].clone();
+    }
 
     let client = Client {
-        logging: Arc::new(Mutex::new(grpc_client)),
-        message: Arc::new(Mutex::new(reqwest::Client::new())),
-        message_url: "http://localhost:13227".to_string(),
+        config: Arc::new(Mutex::new(reqwest::Client::new())),
+        config_url,
     };
 
     let app = Router::new()
