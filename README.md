@@ -1,3 +1,5 @@
+https://github.com/rhusiev-student/s6_apz_lab3/tree/micro_hazelcast
+
 # Запуск сервісів
 
 ![service launch](img/1.png)
